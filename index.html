@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discipulado - Iglesia Bautista Atlatlahucan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            800: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Toast / Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full"></div>
+
+    <header id="main-header" class="bg-white border-b border-slate-200 sticky top-0 z-30 hidden shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center space-x-3">
+                    <img src="IBGA.jpg" alt="Iglesia Bautista Atlatlahucan" class="h-14 w-auto object-contain" onerror="this.style.display='none'">
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight text-slate-900">Discipulado App</h1>
+                        <p class="text-xs text-slate-500">Iglesia Bautista Atlatlahucan · Sistema de Seguimiento Pastoral</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="text-right hidden sm:block">
+                        <p id="nav-user-name" class="text-sm font-semibold text-slate-800"></p>
+                        <span id="nav-user-role" class="inline-block text-xs px-2 py-0.5 rounded-full font-medium"></span>
+                    </div>
+                    <button onclick="logout()" class="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span class="hidden sm:inline">Cerrar Sesión</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="login-view" class="flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 to-slate-200">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
+            <div class="text-center mb-6">
+                <div class="flex justify-center mb-4">
+                    <img src="IBGA.jpg" alt="Iglesia Bautista Atlatlahucan Getsemaní" class="h-32 w-auto object-contain" onerror="this.style.display='none'">
+                </div>
+                <h2 class="text-xl font-bold text-slate-900">Iglesia Bautista Atlatlahucan</h2>
+                <p class="text-sm font-semibold text-slate-600 mt-1">Sistema de Registro de Discipulado</p>
+                <p class="text-slate-400 text-xs mt-2">Ingresa tus credenciales para acceder</p>
+            </div>
+
+            <!-- Sync Loading Indicator -->
+            <div id="login-loading-status" class="mb-4 p-3 bg-blue-50 border border-blue-100 text-blue-700 text-xs rounded-xl flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <span>Verificando conexión con el servicio en la nube...</span>
+            </div>
+
+            <!-- Storage Mode Indicator Badge -->
+            <div id="storage-mode-badge" class="mb-4 hidden text-center">
+                <span id="storage-mode-text" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <i class="fa-solid fa-database"></i> Modo de Datos Activo
+                </span>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Usuario / Discipulador</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <select id="login-user-select" class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none transition" required>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="login-password" placeholder="••••••••" class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-brand-500 focus:outline-none transition" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 rounded-xl transition shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2">
+                    <span>Ingresar</span>
+                    <i class="fa-solid fa-right-to-bracket text-sm"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <main id="app-view" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+
+        <!-- Admin Navigation Tabs -->
+        <div id="admin-tabs" class="mb-6 border-b border-slate-200 hidden">
+            <nav class="-mb-px flex space-x-8">
+                <button onclick="switchAdminTab('overview')" id="tab-btn-overview" class="tab-btn border-brand-500 text-brand-600 py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie"></i> Vista General & Progreso
+                </button>
+                <button onclick="switchAdminTab('users')" id="tab-btn-users" class="tab-btn border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear"></i> Gestión de Discipuladores
+                </button>
+                <button onclick="switchAdminTab('disciples')" id="tab-btn-disciples" class="tab-btn border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> Asignación de Discípulos
+                </button>
+            </nav>
+        </div>
+
+        <!-- Dashboard Header Summary -->
+        <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h2 id="view-title" class="text-2xl font-bold text-slate-900">Panel de Control</h2>
+                <p id="view-subtitle" class="text-sm text-slate-500">Bienvenido al sistema de registro de discipulado.</p>
+            </div>
+            <div id="admin-quick-actions" class="hidden flex gap-3">
+                <button onclick="openNewDiscipleModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-plus"></i> Nuevo Discípulo
+                </button>
+                <button onclick="openNewUserModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-user-plus"></i> Nuevo Discipulador
+                </button>
+            </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Discípulos</p>
+                    <h3 id="kpi-total-disciples" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 text-brand-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lecciones Completadas</p>
+                    <h3 id="kpi-completed-lessons" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Avance Promedio</p>
+                    <h3 id="kpi-avg-progress" class="text-2xl font-bold text-slate-800 mt-1">0%</h3>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Meta Promedio</p>
+                    <h3 id="kpi-current-meta" class="text-2xl font-bold text-slate-800 mt-1">Meta 1</h3>
+                </div>
+                <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: Disciples / Progress View -->
+        <div id="section-overview" class="space-y-6">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div class="relative w-full sm:w-80">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="search-input" oninput="renderDisciplesList()" placeholder="Buscar discípulo..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <div id="discipulador-filter-container" class="hidden min-w-[180px]">
+                        <select id="filter-discipulador" onchange="renderDisciplesList()" class="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="all">Todos los Discipuladores</option>
+                        </select>
+                    </div>
+
+                    <select id="filter-meta" onchange="renderDisciplesList()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="all">Todas las Metas</option>
+                        <option value="1">Meta 1: Palabra de Dios</option>
+                        <option value="2">Meta 2: Compañerismo</option>
+                        <option value="3">Meta 3: Estructura Iglesia</option>
+                        <option value="4">Meta 4: Ministerio</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Disciples Card Grid -->
+            <div id="disciples-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- SECTION: Admin Users Management -->
+        <div id="section-users" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800">Lista de Discipuladores Registrados</h3>
+                    <button onclick="openNewUserModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Crear Discipulador
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-400 uppercase text-[11px] font-semibold tracking-wider border-b border-slate-100">
+                                <th class="py-3.5 px-6">Usuario / Nombre</th>
+                                <th class="py-3.5 px-6">Rol</th>
+                                <th class="py-3.5 px-6">Discípulos Asignados</th>
+                                <th class="py-3.5 px-6 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: Admin Disciples Management Table -->
+        <div id="section-disciples" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800">Asignación Global de Discípulos</h3>
+                    <button onclick="openNewDiscipleModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Registrar Persona
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-400 uppercase text-[11px] font-semibold tracking-wider border-b border-slate-100">
+                                <th class="py-3.5 px-6">Discípulo</th>
+                                <th class="py-3.5 px-6">Teléfono / Contacto</th>
+                                <th class="py-3.5 px-6">Discipulador Asignado</th>
+                                <th class="py-3.5 px-6">Progreso Actual</th>
+                                <th class="py-3.5 px-6 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-disciples-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: Disciple Progress & Lesson Management -->
+    <div id="modal-progress" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 font-bold flex items-center justify-center text-base" id="modal-disciple-avatar">--</div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-lg leading-snug" id="modal-disciple-name">Cargando...</h3>
+                        <p class="text-xs text-slate-500" id="modal-disciple-info">Información de avance</p>
+                    </div>
+                </div>
+                <button onclick="closeProgressModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-200/50 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/60">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Progreso General del Discipulado</span>
+                        <span id="modal-progress-percent" class="text-sm font-bold text-brand-600">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+                        <div id="modal-progress-bar" class="bg-brand-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="metas-accordion-container" class="space-y-4"></div>
+            </div>
+
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeProgressModal()" class="bg-slate-800 hover:bg-slate-900 text-white font-medium px-4 py-2 rounded-xl text-sm transition">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Add / Edit Disciple -->
+    <div id="modal-disciple-form" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-900 text-lg" id="modal-disciple-form-title">Registrar Nuevo Discípulo</h3>
+                <button onclick="closeDiscipleFormModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="form-disciple" onsubmit="saveDisciple(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo *</label>
+                    <input type="text" id="disciple-name" required placeholder="Ej. Carlos Mendoza" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono / WhatsApp</label>
+                    <input type="text" id="disciple-phone" placeholder="Ej. +52 555 123 4567" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Discipulador Asignado *</label>
+                    <select id="disciple-assigned-user" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeDiscipleFormModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 shadow-sm">Guardar Persona</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add / Edit User (Discipulador) -->
+    <div id="modal-user-form" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-900 text-lg">Registrar Nuevo Discipulador</h3>
+                <button onclick="closeUserFormModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="form-user" onsubmit="saveUser(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo *</label>
+                    <input type="text" id="user-full-name" required placeholder="Ej. Pastor Mateo" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre de Usuario (Login) *</label>
+                    <input type="text" id="user-username" required placeholder="ej. mateo" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Contraseña *</label>
+                    <input type="password" id="user-password" required placeholder="••••••••" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Rol en el Sistema *</label>
+                    <select id="user-role" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <option value="discipulador">Discipulador (Usuario Estándar)</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeUserFormModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 shadow-sm">Crear Usuario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Custom Confirmation Dialog -->
+    <div id="modal-confirm" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center">
+            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirm-title" class="font-bold text-slate-900 text-lg mb-2">¿Estás seguro?</h3>
+            <p id="confirm-message" class="text-sm text-slate-500 mb-6">Esta acción no se puede deshacer.</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-sm font-medium transition">Cancelar</button>
+                <button id="confirm-action-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-medium transition shadow-sm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            getDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuración oficial de Firebase del proyecto: discipulado-ibgatlatlahucan
+        const firebaseConfigDefault = {
+            apiKey: "AIzaSyBGkDllROsb_MWt73U_DoDvWm1IGLIfabk",
+            authDomain: "discipulado-ibgatlatlahucan.firebaseapp.com",
+            databaseURL: "https://discipulado-ibgatlatlahucan-default-rtdb.firebaseio.com",
+            projectId: "discipulado-ibgatlatlahucan",
+            storageBucket: "discipulado-ibgatlatlahucan.firebasestorage.app",
+            messagingSenderId: "796463138720",
+            appId: "1:796463138720:web:37c1c30397978035fa86c5",
+            measurementId: "G-3H2MZK9NFN"
+        };
+
+        const DISCIPULADO_STRUCTURE = [
+            {
+                id: 1,
+                title: "Meta 1: Establecer al creyente en la Palabra de Dios",
+                description: "Lecciones 1 a 5",
+                lessons: [
+                    { id: "l1", title: "Lección 1: La Salvación" },
+                    { id: "l2", title: "Lección 2: Seguridad Eterna" },
+                    { id: "l3", title: "Lección 3: El Bautismo" },
+                    { id: "l4", title: "Lección 4: El Espíritu Santo" },
+                    { id: "l5", title: "Lección 5: La Palabra de Dios" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Meta 2: Establecer al discípulo en el Compañerismo con Otros Cristianos",
+                description: "Lecciones 6 a 9",
+                lessons: [
+                    { id: "l6", title: "Lección 6: La Oración" },
+                    { id: "l7", title: "Lección 7: La Voluntad de Dios" },
+                    { id: "l8", title: "Lección 8: La Iglesia Local" },
+                    { id: "l9", title: "Lección 9: Otros Cristianos" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Meta 3: Establecer al discípulo en la Estructura de la Iglesia",
+                description: "Lecciones 10 a 13",
+                lessons: [
+                    { id: "l10", title: "Lección 10: La Ofrenda" },
+                    { id: "l11", title: "Lección 11: El Dinero y Las Posesiones" },
+                    { id: "l12", title: "Lección 12: Tratando con el Pecado" },
+                    { id: "l13", title: "Lección 13: Mi Libertad en Cristo" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Meta 4: Establecer al discípulo en el Ministerio de la Palabra",
+                description: "Lecciones 14 a 16",
+                lessons: [
+                    { id: "l14", title: "Lección 14: Mi Trabajo y mi Patrón" },
+                    { id: "l15", title: "Lección 15: El Mundo Perdido" },
+                    { id: "l16", title: "Lección 16: El Tribunal de Cristo" }
+                ]
+            }
+        ];
+
+        // Default Admin User
+        const DEFAULT_ADMIN = {
+            id: 'u_admin_default',
+            username: "albertolopes",
+            name: "Alberto Lopes",
+            password: "IBGA2026",
+            role: "admin"
+        };
+
+        // State Variables
+        let users = [DEFAULT_ADMIN];
+        let disciples = [];
+        let currentUser = null;
+        let activeAdminTab = 'overview';
+        let currentModalDiscipleId = null;
+        let confirmAction = null;
+        let isCloudMode = false;
+
+        let db = null;
+        let auth = null;
+        let usersColRef = null;
+        let disciplesColRef = null;
+
+        async function initAppSystem() {
+            // Cargar datos locales de inmediato para disponibilidad instantánea
+            loadLocalState();
+
+            let firebaseSupported = false;
+
+            // Determinar configuración de Firebase
+            let configToUse = firebaseConfigDefault;
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                try {
+                    configToUse = JSON.parse(__firebase_config);
+                } catch(e) {}
+            }
+
+            if (configToUse && configToUse.apiKey) {
+                try {
+                    const app = initializeApp(configToUse);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch(e) {
+                        console.warn("Autenticación anónima opcional omitida:", e);
+                    }
+
+                    usersColRef = collection(db, 'users');
+                    disciplesColRef = collection(db, 'disciples');
+
+                    // Escuchador en tiempo real de Usuarios
+                    onSnapshot(usersColRef, (snapshot) => {
+                        const fetchedUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        if (fetchedUsers.length > 0) {
+                            users = fetchedUsers;
+                            saveUsersToLocal();
+                        } else {
+                            if (!users || users.length === 0) users = [DEFAULT_ADMIN];
+                            seedDefaultAdminCloud();
+                        }
+                        populateLoginSelect();
+                        if (currentUser) {
+                            populateDiscipuladorFilter();
+                            renderUsersTable();
+                            renderAdminDisciplesTable();
+                        }
+                    }, (error) => {
+                        console.warn("Error leyendo Firestore usuarios (posibles reglas bloqueadas), usando local:", error);
+                    });
+
+                    // Escuchador en tiempo real de Discípulos
+                    onSnapshot(disciplesColRef, (snapshot) => {
+                        const fetchedDisciples = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        if (fetchedDisciples.length > 0 || disciples.length === 0) {
+                            disciples = fetchedDisciples;
+                            saveDisciplesToLocal();
+                        }
+                        if (currentUser) {
+                            updateKPIs();
+                            renderDisciplesList();
+                            renderAdminDisciplesTable();
+                            if (currentModalDiscipleId) {
+                                const updatedDisciple = disciples.find(d => d.id === currentModalDiscipleId);
+                                if (updatedDisciple) renderModalMetas(updatedDisciple);
+                            }
+                        }
+                    }, (error) => {
+                        console.warn("Error leyendo Firestore discípulos (posibles reglas bloqueadas), usando local:", error);
+                    });
+
+                    isCloudMode = true;
+                    firebaseSupported = true;
+                } catch (e) {
+                    console.warn("Firebase no disponible. Usando respaldo LocalStorage.", e);
+                }
+            }
+
+            if (!firebaseSupported) {
+                isCloudMode = false;
+            }
+
+            populateLoginSelect();
+
+            document.getElementById('login-loading-status').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+
+            const badge = document.getElementById('storage-mode-badge');
+            const badgeText = document.getElementById('storage-mode-text');
+            badge.classList.remove('hidden');
+            if (isCloudMode) {
+                badgeText.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200";
+                badgeText.innerHTML = '<i class="fa-solid fa-cloud"></i> Sincronización Híbrida (Nube + Local)';
+            } else {
+                badgeText.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
+                badgeText.innerHTML = '<i class="fa-solid fa-database"></i> Modo Almacenamiento Local';
+            }
+
+            checkSession();
+        }
+
+        function loadLocalState() {
+            const storedUsers = localStorage.getItem('ibga_users');
+            if (storedUsers) {
+                try {
+                    users = JSON.parse(storedUsers);
+                } catch(e) {
+                    users = [DEFAULT_ADMIN];
+                }
+            }
+            if (!users || users.length === 0) {
+                users = [DEFAULT_ADMIN];
+                saveUsersToLocal();
+            }
+
+            if (!users.some(u => u.username === 'albertolopes')) {
+                users.push(DEFAULT_ADMIN);
+                saveUsersToLocal();
+            }
+
+            const storedDisciples = localStorage.getItem('ibga_disciples');
+            if (storedDisciples) {
+                try {
+                    disciples = JSON.parse(storedDisciples);
+                } catch(e) {
+                    disciples = [];
+                }
+            } else {
+                disciples = [];
+                saveDisciplesToLocal();
+            }
+        }
+
+        async function seedDefaultAdminCloud() {
+            if (!usersColRef) return;
+            try {
+                const adminDoc = doc(usersColRef, 'u1');
+                await setDoc(adminDoc, {
+                    username: "albertolopes",
+                    name: "Alberto Lopes",
+                    password: "IBGA2026",
+                    role: "admin"
+                });
+            } catch (e) {
+                console.warn("No se pudo sembrar el admin inicial en Firestore:", e);
+            }
+        }
+
+        function saveUsersToLocal() {
+            localStorage.setItem('ibga_users', JSON.stringify(users));
+        }
+
+        function saveDisciplesToLocal() {
+            localStorage.setItem('ibga_disciples', JSON.stringify(disciples));
+        }
+
+        function populateLoginSelect() {
+            const select = document.getElementById('login-user-select');
+            if (!select) return;
+            const prevValue = select.value;
+
+            if (!users || users.length === 0) {
+                users = [DEFAULT_ADMIN];
+            }
+
+            select.innerHTML = '<option value="">Selecciona un usuario...</option>';
+            users.forEach(u => {
+                select.innerHTML += `<option value="${u.id}">${u.name} (${u.role === 'admin' ? 'Administrador' : 'Discipulador'})</option>`;
+            });
+            if (prevValue) select.value = prevValue;
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const userId = document.getElementById('login-user-select').value;
+            const password = document.getElementById('login-password').value;
+
+            const user = users.find(u => u.id === userId);
+            if (!user) {
+                showToast('Por favor selecciona un usuario válido', 'error');
+                return;
+            }
+
+            if (user.password !== password) {
+                showToast('Contraseña incorrecta', 'error');
+                return;
+            }
+
+            currentUser = user;
+            sessionStorage.setItem('disc_session_user_id', currentUser.id);
+            document.getElementById('login-password').value = '';
+            showToast(`¡Bienvenido, ${currentUser.name}!`, 'success');
+            renderAppView();
+        }
+
+        function checkSession() {
+            const savedUserId = sessionStorage.getItem('disc_session_user_id');
+            if (savedUserId && users.length > 0) {
+                const found = users.find(u => u.id === savedUserId);
+                if (found) {
+                    currentUser = found;
+                    renderAppView();
+                    return;
+                }
+            }
+            showLoginView();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('disc_session_user_id');
+            currentUser = null;
+            showLoginView();
+            showToast('Sesión cerrada correctamente', 'info');
+        }
+
+        function showLoginView() {
+            populateLoginSelect();
+            document.getElementById('login-view').classList.remove('hidden');
+            document.getElementById('app-view').classList.add('hidden');
+            document.getElementById('main-header').classList.add('hidden');
+        }
+
+        function renderAppView() {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('app-view').classList.remove('hidden');
+            document.getElementById('main-header').classList.remove('hidden');
+
+            document.getElementById('nav-user-name').textContent = currentUser.name;
+            const roleBadge = document.getElementById('nav-user-role');
+            if (currentUser.role === 'admin') {
+                roleBadge.textContent = 'Administrador';
+                roleBadge.className = 'inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700';
+                document.getElementById('admin-tabs').classList.remove('hidden');
+                document.getElementById('admin-quick-actions').classList.remove('hidden');
+                document.getElementById('discipulador-filter-container').classList.remove('hidden');
+                populateDiscipuladorFilter();
+            } else {
+                roleBadge.textContent = 'Discipulador';
+                roleBadge.className = 'inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700';
+                document.getElementById('admin-tabs').classList.add('hidden');
+                document.getElementById('admin-quick-actions').classList.add('hidden');
+                document.getElementById('discipulador-filter-container').classList.add('hidden');
+            }
+
+            switchAdminTab('overview');
+            updateKPIs();
+            renderDisciplesList();
+        }
+
+        function populateDiscipuladorFilter() {
+            const select = document.getElementById('filter-discipulador');
+            if (!select) return;
+            select.innerHTML = '<option value="all">Todos los Discipuladores</option>';
+            users.filter(u => u.role === 'discipulador').forEach(u => {
+                select.innerHTML += `<option value="${u.id}">${u.name}</option>`;
+            });
+        }
+
+        function switchAdminTab(tabName) {
+            activeAdminTab = tabName;
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-brand-500', 'text-brand-600');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-500');
+                activeBtn.classList.add('border-brand-500', 'text-brand-600');
+            }
+
+            document.getElementById('section-overview').classList.add('hidden');
+            document.getElementById('section-users').classList.add('hidden');
+            document.getElementById('section-disciples').classList.add('hidden');
+
+            if (tabName === 'overview') {
+                document.getElementById('section-overview').classList.remove('hidden');
+                document.getElementById('view-title').textContent = currentUser.role === 'admin' ? "Panel General de Discipulado" : "Mis Discípulos Asignados";
+                document.getElementById('view-subtitle').textContent = currentUser.role === 'admin' ? "Vista panorámica del progreso de todas las personas." : "Seguimiento y registro de avance lección por lección.";
+                renderDisciplesList();
+            } else if (tabName === 'users') {
+                document.getElementById('section-users').classList.remove('hidden');
+                document.getElementById('view-title').textContent = "Gestión de Discipuladores";
+                document.getElementById('view-subtitle').textContent = "Administración de usuarios que imparten discipulado.";
+                renderUsersTable();
+            } else if (tabName === 'disciples') {
+                document.getElementById('section-disciples').classList.remove('hidden');
+                document.getElementById('view-title').textContent = "Asignación de Discípulos";
+                document.getElementById('view-subtitle').textContent = "Asigna nuevos creyentes a cada discipulador.";
+                renderAdminDisciplesTable();
+            }
+        }
+
+        function updateKPIs() {
+            let relevantDisciples = disciples;
+            if (currentUser.role !== 'admin') {
+                relevantDisciples = disciples.filter(d => d.assignedTo === currentUser.id);
+            }
+
+            const totalCount = relevantDisciples.length;
+            let totalCompletedLessons = 0;
+            let sumPercentage = 0;
+
+            const totalPossibleLessonsPerDisciple = 16;
+
+            relevantDisciples.forEach(d => {
+                const completed = Object.values(d.progress || {}).filter(p => p.completed).length;
+                totalCompletedLessons += completed;
+                sumPercentage += (completed / totalPossibleLessonsPerDisciple) * 100;
+            });
+
+            const avgProgress = totalCount > 0 ? Math.round(sumPercentage / totalCount) : 0;
+
+            let avgMeta = 1;
+            if (avgProgress >= 88) avgMeta = 4;
+            else if (avgProgress >= 69) avgMeta = 3;
+            else if (avgProgress >= 44) avgMeta = 2;
+
+            document.getElementById('kpi-total-disciples').textContent = totalCount;
+            document.getElementById('kpi-completed-lessons').textContent = totalCompletedLessons;
+            document.getElementById('kpi-avg-progress').textContent = `${avgProgress}%`;
+            document.getElementById('kpi-current-meta').textContent = `Meta ${avgMeta}`;
+        }
+
+        function renderDisciplesList() {
+            const grid = document.getElementById('disciples-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const searchVal = document.getElementById('search-input')?.value.toLowerCase() || '';
+            const metaFilter = document.getElementById('filter-meta')?.value || 'all';
+            const discipuladorFilter = currentUser.role === 'admin' ? (document.getElementById('filter-discipulador')?.value || 'all') : currentUser.id;
+
+            let filtered = disciples.filter(d => {
+                if (currentUser.role !== 'admin' && d.assignedTo !== currentUser.id) return false;
+                if (currentUser.role === 'admin' && discipuladorFilter !== 'all' && d.assignedTo !== discipuladorFilter) return false;
+                if (searchVal && !d.name.toLowerCase().includes(searchVal)) return false;
+
+                if (metaFilter !== 'all') {
+                    const metaNum = parseInt(metaFilter);
+                    const currentMeta = getDiscipleCurrentMeta(d);
+                    if (currentMeta !== metaNum) return false;
+                }
+
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white p-12 text-center rounded-2xl border border-slate-200">
+                        <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-3"></i>
+                        <h4 class="text-base font-bold text-slate-700">No se encontraron discípulos</h4>
+                        <p class="text-sm text-slate-400 mt-1">Ajusta los filtros de búsqueda o registra a un nuevo discípulo.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(d => {
+                const assignedUser = users.find(u => u.id === d.assignedTo) || { name: 'Sin Asignar' };
+                const completedCount = Object.values(d.progress || {}).filter(p => p.completed).length;
+                const percent = Math.round((completedCount / 16) * 100);
+                const currentMetaNum = getDiscipleCurrentMeta(d);
+
+                grid.innerHTML += `
+                    <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-lg leading-tight">${d.name}</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-phone text-[10px] mr-1"></i>${d.phone || 'Sin teléfono'}</p>
+                                </div>
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-brand-50 text-brand-600 border border-brand-100">
+                                    Meta ${currentMetaNum}
+                                </span>
+                            </div>
+
+                            ${currentUser.role === 'admin' ? `
+                                <div class="mb-4 text-xs bg-slate-50 p-2 rounded-lg text-slate-600 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-user-tie text-slate-400"></i>
+                                    <span>Discipulador: <strong class="text-slate-700">${assignedUser.name}</strong></span>
+                                </div>
+                            ` : ''}
+
+                            <div class="mt-3">
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-500">Avance General</span>
+                                    <span class="text-brand-600">${percent}% (${completedCount}/16)</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-brand-600 h-full rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex gap-2">
+                            <button onclick="openProgressModal('${d.id}')" class="flex-grow bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-clipboard-check"></i> Registrar / Ver Avance
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function getDiscipleCurrentMeta(disciple) {
+            const prog = disciple.progress || {};
+            for (let meta of DISCIPULADO_STRUCTURE) {
+                const metaLessons = meta.lessons;
+                const completedInMeta = metaLessons.filter(l => prog[l.id] && prog[l.id].completed).length;
+                if (completedInMeta < metaLessons.length) {
+                    return meta.id;
+                }
+            }
+            return 4;
+        }
+
+        function openProgressModal(discipleId) {
+            currentModalDiscipleId = discipleId;
+            const disciple = disciples.find(d => d.id === discipleId);
+            if (!disciple) return;
+
+            document.getElementById('modal-disciple-name').textContent = disciple.name;
+            document.getElementById('modal-disciple-avatar').textContent = disciple.name.substring(0, 2).toUpperCase();
+            
+            const assignedUser = users.find(u => u.id === disciple.assignedTo);
+            document.getElementById('modal-disciple-info').textContent = `Discipulador: ${assignedUser ? assignedUser.name : 'N/A'} | Contacto: ${disciple.phone || 'N/A'}`;
+
+            renderModalMetas(disciple);
+            document.getElementById('modal-progress').classList.remove('hidden');
+        }
+
+        function closeProgressModal() {
+            document.getElementById('modal-progress').classList.add('hidden');
+            currentModalDiscipleId = null;
+            updateKPIs();
+            renderDisciplesList();
+        }
+
+        function renderModalMetas(disciple) {
+            const container = document.getElementById('metas-accordion-container');
+            container.innerHTML = '';
+
+            const prog = disciple.progress || {};
+            const completedCount = Object.values(prog).filter(p => p.completed).length;
+            const totalPercent = Math.round((completedCount / 16) * 100);
+
+            document.getElementById('modal-progress-percent').textContent = `${totalPercent}% (${completedCount}/16 Lecciones)`;
+            document.getElementById('modal-progress-bar').style.width = `${totalPercent}%`;
+
+            DISCIPULADO_STRUCTURE.forEach(meta => {
+                const metaCompletedCount = meta.lessons.filter(l => prog[l.id] && prog[l.id].completed).length;
+
+                let lessonsHtml = '';
+                meta.lessons.forEach(lesson => {
+                    const lessonData = prog[lesson.id] || { completed: false, date: '', notes: '' };
+                    
+                    lessonsHtml += `
+                        <div class="p-3 bg-white border border-slate-200/70 rounded-xl mb-2 hover:border-slate-300 transition">
+                            <div class="flex items-start justify-between gap-3">
+                                <label class="flex items-center gap-3 cursor-pointer select-none font-medium text-slate-800 text-sm flex-grow">
+                                    <input type="checkbox" onchange="toggleLessonState('${disciple.id}', '${lesson.id}', this.checked)" ${lessonData.completed ? 'checked' : ''} class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                                    <span class="${lessonData.completed ? 'line-through text-slate-400' : ''}">${lesson.title}</span>
+                                </label>
+
+                                ${lessonData.completed ? `
+                                    <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md">
+                                        Completado
+                                    </span>
+                                ` : `
+                                    <span class="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                                        Pendiente
+                                    </span>
+                                `}
+                            </div>
+
+                            <div class="mt-3 pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <label class="block text-slate-400 text-[10px] uppercase font-semibold mb-1">Fecha Completado</label>
+                                    <input type="date" value="${lessonData.date || ''}" onchange="updateLessonDate('${disciple.id}', '${lesson.id}', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-slate-400 text-[10px] uppercase font-semibold mb-1">Observaciones / Notas</label>
+                                    <input type="text" value="${lessonData.notes || ''}" placeholder="Ej. Excelente comprensión..." onchange="updateLessonNotes('${disciple.id}', '${lesson.id}', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-xs">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/50">
+                        <div class="p-4 bg-white border-b border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm sm:text-base">${meta.title}</h4>
+                                <p class="text-xs text-slate-500">${meta.description}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-brand-600 bg-brand-50 border border-brand-100 px-2.5 py-1 rounded-full">
+                                    ${metaCompletedCount}/${meta.lessons.length} Lecciones
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            ${lessonsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function toggleLessonState(discipleId, lessonId, isChecked) {
+            const disciple = disciples.find(d => d.id === discipleId);
+            if (!disciple) return;
+
+            if (!disciple.progress) disciple.progress = {};
+            if (!disciple.progress[lessonId]) {
+                disciple.progress[lessonId] = { completed: false, date: '', notes: '' };
+            }
+
+            disciple.progress[lessonId].completed = isChecked;
+            if (isChecked && !disciple.progress[lessonId].date) {
+                disciple.progress[lessonId].date = new Date().toISOString().split('T')[0];
+            }
+
+            // Guardado local garantizado
+            saveDisciplesToLocal();
+            if (currentModalDiscipleId === discipleId) renderModalMetas(disciple);
+
+            // Sincronización opcional con la nube
+            if (isCloudMode && disciplesColRef) {
+                try {
+                    const docRef = doc(disciplesColRef, discipleId);
+                    await updateDoc(docRef, { progress: disciple.progress });
+                } catch (err) {
+                    console.error("Error al actualizar la lección en la nube:", err);
+                    showToast('Cambio guardado en el dispositivo (Verifica reglas de Firebase)', 'info');
+                }
+            } else {
+                showToast(isChecked ? 'Lección completada' : 'Lección desmarcada', 'info');
+            }
+        }
+
+        async function updateLessonDate(discipleId, lessonId, dateVal) {
+            const disciple = disciples.find(d => d.id === discipleId);
+            if (!disciple) return;
+
+            if (!disciple.progress) disciple.progress = {};
+            if (!disciple.progress[lessonId]) {
+                disciple.progress[lessonId] = { completed: true, date: '', notes: '' };
+            }
+            disciple.progress[lessonId].date = dateVal;
+
+            saveDisciplesToLocal();
+
+            if (isCloudMode && disciplesColRef) {
+                try {
+                    const docRef = doc(disciplesColRef, discipleId);
+                    await updateDoc(docRef, { progress: disciple.progress });
+                } catch (err) {
+                    console.error("Error al actualizar fecha en la nube:", err);
+                }
+            }
+        }
+
+        async function updateLessonNotes(discipleId, lessonId, noteVal) {
+            const disciple = disciples.find(d => d.id === discipleId);
+            if (!disciple) return;
+
+            if (!disciple.progress) disciple.progress = {};
+            if (!disciple.progress[lessonId]) {
+                disciple.progress[lessonId] = { completed: true, date: '', notes: '' };
+            }
+            disciple.progress[lessonId].notes = noteVal;
+
+            saveDisciplesToLocal();
+
+            if (isCloudMode && disciplesColRef) {
+                try {
+                    const docRef = doc(disciplesColRef, discipleId);
+                    await updateDoc(docRef, { progress: disciple.progress });
+                } catch (err) {
+                    console.error("Error al actualizar observaciones en la nube:", err);
+                }
+            }
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            users.forEach(u => {
+                const assignedCount = disciples.filter(d => d.assignedTo === u.id).length;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3.5 px-6 font-medium text-slate-800">
+                            ${u.name}
+                            <span class="block text-xs text-slate-400 font-normal">@${u.username}</span>
+                        </td>
+                        <td class="py-3.5 px-6">
+                            <span class="px-2 py-0.5 text-xs rounded-full font-medium ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-700'}">
+                                ${u.role === 'admin' ? 'Administrador' : 'Discipulador'}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-6 text-slate-600 font-semibold">${assignedCount} personas</td>
+                        <td class="py-3.5 px-6 text-right space-x-2">
+                            ${u.username !== 'albertolopes' ? `
+                                <button onclick="promptDeleteUser('${u.id}', '${u.name}')" class="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            ` : '<span class="text-xs text-slate-400 italic">Sistema Principal</span>'}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderAdminDisciplesTable() {
+            const tbody = document.getElementById('admin-disciples-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            disciples.forEach(d => {
+                const completedCount = Object.values(d.progress || {}).filter(p => p.completed).length;
+                const percent = Math.round((completedCount / 16) * 100);
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3.5 px-6 font-semibold text-slate-800">${d.name}</td>
+                        <td class="py-3.5 px-6 text-slate-600">${d.phone || 'N/A'}</td>
+                        <td class="py-3.5 px-6">
+                            <select onchange="reassignDisciple('${d.id}', this.value)" class="bg-slate-50 border border-slate-200 rounded-lg text-xs py-1 px-2 focus:ring-2 focus:ring-brand-500">
+                                ${users.filter(u => u.role === 'discipulador').map(u => `
+                                    <option value="${u.id}" ${d.assignedTo === u.id ? 'selected' : ''}>${u.name}</option>
+                                `).join('')}
+                            </select>
+                        </td>
+                        <td class="py-3.5 px-6">
+                            <div class="flex items-center gap-2">
+                                <div class="w-24 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-brand-600 h-full rounded-full" style="width: ${percent}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-600">${percent}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-6 text-right space-x-2">
+                            <button onclick="openProgressModal('${d.id}')" class="text-brand-600 hover:text-brand-800 p-1.5 rounded-lg hover:bg-brand-50 transition" title="Ver Avance">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button onclick="promptDeleteDisciple('${d.id}', '${d.name}')" class="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Eliminar">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function reassignDisciple(discipleId, newUserId) {
+            const disciple = disciples.find(d => d.id === discipleId);
+            if (disciple) disciple.assignedTo = newUserId;
+
+            saveDisciplesToLocal();
+
+            if (isCloudMode && disciplesColRef) {
+                try {
+                    const docRef = doc(disciplesColRef, discipleId);
+                    await updateDoc(docRef, { assignedTo: newUserId });
+                } catch (err) {
+                    console.error("Error al reasignar en la nube:", err);
+                }
+            }
+            showToast('Discipulador reasignado con éxito', 'success');
+        }
+
+        function openNewDiscipleModal() {
+            const select = document.getElementById('disciple-assigned-user');
+            select.innerHTML = '';
+            users.filter(u => u.role === 'discipulador').forEach(u => {
+                select.innerHTML += `<option value="${u.id}">${u.name}</option>`;
+            });
+
+            document.getElementById('form-disciple').reset();
+            document.getElementById('modal-disciple-form').classList.remove('hidden');
+        }
+
+        function closeDiscipleFormModal() {
+            document.getElementById('modal-disciple-form').classList.add('hidden');
+        }
+
+        async function saveDisciple(e) {
+            e.preventDefault();
+            const name = document.getElementById('disciple-name').value;
+            const phone = document.getElementById('disciple-phone').value;
+            const assignedTo = document.getElementById('disciple-assigned-user').value;
+
+            const newDiscipleId = 'd_' + Date.now();
+            const newDisciple = {
+                id: newDiscipleId,
+                name: name,
+                phone: phone,
+                assignedTo: assignedTo,
+                progress: {}
+            };
+
+            // Guardado inmediato en la memoria local y localStorage
+            disciples.push(newDisciple);
+            saveDisciplesToLocal();
+            updateKPIs();
+            renderDisciplesList();
+            renderAdminDisciplesTable();
+
+            // Intento de guardado en la nube
+            if (isCloudMode && disciplesColRef) {
+                try {
+                    await setDoc(doc(disciplesColRef, newDiscipleId), newDisciple);
+                } catch (err) {
+                    console.error("Error al guardar discípulo en la nube:", err);
+                    showToast('Guardado en este dispositivo (Error en la nube)', 'info');
+                }
+            }
+
+            closeDiscipleFormModal();
+            showToast('Nuevo discípulo registrado con éxito', 'success');
+        }
+
+        function promptDeleteDisciple(discipleId, name) {
+            showConfirmModal(
+                `¿Eliminar a ${name}?`,
+                "Esta persona será borrada del registro de discipulado.",
+                async () => {
+                    disciples = disciples.filter(d => d.id !== discipleId);
+                    saveDisciplesToLocal();
+                    updateKPIs();
+                    renderDisciplesList();
+                    renderAdminDisciplesTable();
+
+                    if (isCloudMode && disciplesColRef) {
+                        try {
+                            await deleteDoc(doc(disciplesColRef, discipleId));
+                        } catch (err) {
+                            console.error("Error al eliminar discípulo en la nube:", err);
+                        }
+                    }
+                    showToast('Persona eliminada', 'info');
+                }
+            );
+        }
+
+        function openNewUserModal() {
+            document.getElementById('form-user').reset();
+            document.getElementById('modal-user-form').classList.remove('hidden');
+        }
+
+        function closeUserFormModal() {
+            document.getElementById('modal-user-form').classList.add('hidden');
+        }
+
+        async function saveUser(e) {
+            e.preventDefault();
+            const name = document.getElementById('user-full-name').value;
+            const username = document.getElementById('user-username').value.toLowerCase().trim();
+            const password = document.getElementById('user-password').value;
+            const role = document.getElementById('user-role').value;
+
+            if (users.some(u => u.username === username)) {
+                showToast('El nombre de usuario ya existe', 'error');
+                return;
+            }
+
+            const newUserId = 'u_' + Date.now();
+            const newUser = {
+                id: newUserId,
+                username: username,
+                name: name,
+                password: password,
+                role: role
+            };
+
+            // Guardado local inmediato
+            users.push(newUser);
+            saveUsersToLocal();
+            populateLoginSelect();
+            populateDiscipuladorFilter();
+            renderUsersTable();
+
+            // Sincronización nube
+            if (isCloudMode && usersColRef) {
+                try {
+                    await setDoc(doc(usersColRef, newUserId), newUser);
+                } catch (err) {
+                    console.error("Error al guardar usuario en la nube:", err);
+                    showToast('Creado localmente (Error en la nube)', 'info');
+                }
+            }
+
+            closeUserFormModal();
+            showToast('Nuevo discipulador creado correctamente', 'success');
+        }
+
+        function promptDeleteUser(userId, name) {
+            showConfirmModal(
+                `¿Eliminar al discipulador ${name}?`,
+                "Sus discípulos deberán ser reasignados a un nuevo discipulador.",
+                async () => {
+                    users = users.filter(u => u.id !== userId);
+                    saveUsersToLocal();
+                    populateLoginSelect();
+                    populateDiscipuladorFilter();
+                    renderUsersTable();
+
+                    if (isCloudMode && usersColRef) {
+                        try {
+                            await deleteDoc(doc(usersColRef, userId));
+                        } catch (err) {
+                            console.error("Error al eliminar usuario en la nube:", err);
+                        }
+                    }
+                    showToast('Usuario eliminado', 'info');
+                }
+            );
+        }
+
+        function showConfirmModal(title, message, actionCallback) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            confirmAction = actionCallback;
+            
+            const actionBtn = document.getElementById('confirm-action-btn');
+            actionBtn.onclick = async () => {
+                closeConfirmModal();
+                if (confirmAction) await confirmAction();
+            };
+
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('modal-confirm').classList.add('hidden');
+            confirmAction = null;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgBg = 'bg-slate-900 text-white';
+            let icon = 'fa-info-circle';
+
+            if (type === 'success') {
+                bgBg = 'bg-emerald-600 text-white';
+                icon = 'fa-circle-check';
+            } else if (type === 'error') {
+                bgBg = 'bg-rose-600 text-white';
+                icon = 'fa-circle-exclamation';
+            }
+
+            toast.className = `${bgBg} px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium transition duration-300 opacity-0 transform translate-y-2`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        window.handleLogin = handleLogin;
+        window.logout = logout;
+        window.switchAdminTab = switchAdminTab;
+        window.openNewDiscipleModal = openNewDiscipleModal;
+        window.closeDiscipleFormModal = closeDiscipleFormModal;
+        window.saveDisciple = saveDisciple;
+        window.openNewUserModal = openNewUserModal;
+        window.closeUserFormModal = closeUserFormModal;
+        window.saveUser = saveUser;
+        window.renderDisciplesList = renderDisciplesList;
+        window.openProgressModal = openProgressModal;
+        window.closeProgressModal = closeProgressModal;
+        window.toggleLessonState = toggleLessonState;
+        window.updateLessonDate = updateLessonDate;
+        window.updateLessonNotes = updateLessonNotes;
+        window.reassignDisciple = reassignDisciple;
+        window.promptDeleteDisciple = promptDeleteDisciple;
+        window.promptDeleteUser = promptDeleteUser;
+        window.closeConfirmModal = closeConfirmModal;
+
+        // Initialize App system on DOM ready
+        window.addEventListener('DOMContentLoaded', initAppSystem);
+    </script>
+</body>
+</html>
